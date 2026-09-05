@@ -20,9 +20,9 @@ export type Generator = {
   specificLocation: string;
   capacity: string;
   status: GenStatus;
-  lastOilChange?: string;
-  lastFilterChange?: string;
-  lastBatteryChange?: string;
+  lastOilChange?: string | undefined;
+  lastFilterChange?: string | undefined;
+  lastBatteryChange?: string | undefined;
   createdAt: string;
 };
 
