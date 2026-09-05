@@ -18,7 +18,7 @@ export function Banner({ userName, roleLabel, onLogout }: Props) {
           alt="الترويسة الرسمية — هيأة توزيع المنتجات النفطية، فرع الأنبار، القسم الفني، شعبة الكهرباء، وحدة المولدات"
           width={951}
           height={233}
-          className="max-h-64 w-full object-cover object-top sm:max-h-72"
+          className="h-auto w-full"
         />
         {userName ? (
           <div className="absolute inset-y-0 left-0 flex items-center p-3 sm:p-5">
