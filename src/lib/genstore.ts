@@ -20,6 +20,9 @@ export type Generator = {
   specificLocation: string;
   capacity: string;
   status: GenStatus;
+  lastOilChange?: string;
+  lastFilterChange?: string;
+  lastBatteryChange?: string;
   createdAt: string;
 };
 
@@ -36,8 +39,12 @@ export type Report = {
   oilStatus: string;
   filterStatus: string;
   coolingStatus: string;
+  batteryStatus?: string;
   batteryVoltage: string;
   chargingVoltage: string;
+  oilChangedOn?: string;
+  filterChangedOn?: string;
+  batteryChangedOn?: string;
   notes: string;
   photos: string[];
   createdAt: string;
