@@ -108,7 +108,10 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
                         {done ? <CircleCheck className="size-4 text-success" /> : null}
                       </span>
                       <span className="mt-1 flex items-center justify-between gap-2">
-                        <span className="font-mono text-[11px] text-muted-foreground">{g.code}</span>
+                        <span className="font-mono text-[11px] text-muted-foreground">
+                          {g.code}
+                          {g.specificLocation ? ` — ${g.specificLocation}` : ""}
+                        </span>
                         <span
                           className={`rounded-full border px-2 py-0.5 text-[11px] font-bold ${STATUS_CLASS[g.status]}`}
                         >
