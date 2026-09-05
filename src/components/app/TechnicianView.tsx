@@ -108,15 +108,38 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
       <main className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[320px_1fr]">
         <section className="panel h-fit overflow-hidden">
           <h2 className="border-b border-border px-4 py-3 text-sm font-bold">
-            مولدات موقعي ({mine.length})
+            مولدات موقعي ({visible.length})
           </h2>
-          {mine.length === 0 ? (
+          {subLocations.length > 0 ? (
+            <div className="border-b border-border px-4 py-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+                  الموقع الخاص
+                </span>
+                <select
+                  className="field"
+                  value={subFilter}
+                  onChange={(e) => setSubFilter(e.target.value)}
+                >
+                  <option value="all">الكل</option>
+                  {subLocations.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : null}
+          {visible.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-              لا توجد مولدات مخصصة لموقعك.
+              {mine.length === 0
+                ? "لا توجد مولدات مخصصة لموقعك."
+                : "لا توجد مولدات في هذا الموقع الخاص."}
             </p>
           ) : (
             <ul className="divide-y divide-border">
-              {mine.map((g) => {
+              {visible.map((g) => {
                 const done = reports.some(
                   (r) => r.generatorId === g.id && r.date === todayKey(),
                 );
