@@ -502,6 +502,15 @@ export function EngineerDashboard({
   );
 }
 
+function R({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="rounded-lg border border-border bg-secondary/40 px-3 py-2">
+      <span className="mb-0.5 block text-xs font-bold text-muted-foreground">{label}</span>
+      {value}
+    </p>
+  );
+}
+
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
