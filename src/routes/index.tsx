@@ -80,7 +80,17 @@ function Index() {
 
     const status = statusFromMaintenance(report.maintenanceType);
     setGenerators(
-      store.getGenerators().map((g) => (g.id === report.generatorId ? { ...g, status } : g)),
+      store.getGenerators().map((g) =>
+        g.id === report.generatorId
+          ? {
+              ...g,
+              status,
+              lastOilChange: report.oilChangedOn ?? g.lastOilChange,
+              lastFilterChange: report.filterChangedOn ?? g.lastFilterChange,
+              lastBatteryChange: report.batteryChangedOn ?? g.lastBatteryChange,
+            }
+          : g,
+      ),
     );
   };
 

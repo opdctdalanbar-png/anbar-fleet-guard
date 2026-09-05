@@ -33,6 +33,7 @@ const blank = (generatorId: string, user: User): Report => ({
   oilStatus: "جيد",
   filterStatus: "جيد",
   coolingStatus: "جيد",
+  batteryStatus: "جيدة",
   batteryVoltage: "",
   chargingVoltage: "",
   notes: "",
@@ -48,6 +49,28 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
   const [selected, setSelected] = useState<string | null>(null);
   const [draft, setDraft] = useState<Report | null>(null);
   const [saved, setSaved] = useState(false);
+  const [subFilter, setSubFilter] = useState("all");
+
+  const subLocations = useMemo(
+    () =>
+      Array.from(
+        new Set(mine.map((g) => g.specificLocation.trim()).filter((s) => s.length > 0)),
+      ),
+    [mine],
+  );
+
+  const visible = useMemo(
+    () =>
+      subFilter === "all"
+        ? mine
+        : mine.filter((g) => g.specificLocation.trim() === subFilter),
+    [mine, subFilter],
+  );
+
+  const selectedGen = useMemo(
+    () => generators.find((g) => g.id === selected) ?? null,
+    [generators, selected],
+  );
 
   const openGenerator = (g: Generator) => {
     const existing = reports.find((r) => r.generatorId === g.id && r.date === todayKey());
@@ -85,15 +108,38 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
       <main className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-[320px_1fr]">
         <section className="panel h-fit overflow-hidden">
           <h2 className="border-b border-border px-4 py-3 text-sm font-bold">
-            مولدات موقعي ({mine.length})
+            مولدات موقعي ({visible.length})
           </h2>
-          {mine.length === 0 ? (
+          {subLocations.length > 0 ? (
+            <div className="border-b border-border px-4 py-3">
+              <label className="block">
+                <span className="mb-1 block text-xs font-semibold text-muted-foreground">
+                  الموقع الخاص
+                </span>
+                <select
+                  className="field"
+                  value={subFilter}
+                  onChange={(e) => setSubFilter(e.target.value)}
+                >
+                  <option value="all">الكل</option>
+                  {subLocations.map((s) => (
+                    <option key={s} value={s}>
+                      {s}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            </div>
+          ) : null}
+          {visible.length === 0 ? (
             <p className="px-4 py-8 text-center text-sm text-muted-foreground">
-              لا توجد مولدات مخصصة لموقعك.
+              {mine.length === 0
+                ? "لا توجد مولدات مخصصة لموقعك."
+                : "لا توجد مولدات في هذا الموقع الخاص."}
             </p>
           ) : (
             <ul className="divide-y divide-border">
-              {mine.map((g) => {
+              {visible.map((g) => {
                 const done = reports.some(
                   (r) => r.generatorId === g.id && r.date === todayKey(),
                 );
@@ -180,7 +226,14 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
                   <select
                     className="field"
                     value={draft.oilStatus}
-                    onChange={(e) => setDraft({ ...draft, oilStatus: e.target.value })}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDraft({
+                        ...draft,
+                        oilStatus: v,
+                        oilChangedOn: v === "تم التبديل" ? todayKey() : undefined,
+                      });
+                    }}
                   >
                     {["جيد", "يحتاج إضافة", "تم التبديل", "ضعيف"].map((o) => (
                       <option key={o}>{o}</option>
@@ -191,7 +244,14 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
                   <select
                     className="field"
                     value={draft.filterStatus}
-                    onChange={(e) => setDraft({ ...draft, filterStatus: e.target.value })}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDraft({
+                        ...draft,
+                        filterStatus: v,
+                        filterChangedOn: v === "تم التبديل" ? todayKey() : undefined,
+                      });
+                    }}
                   >
                     {["جيد", "يحتاج تنظيف", "تم التبديل", "تالف"].map((o) => (
                       <option key={o}>{o}</option>
@@ -205,6 +265,24 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
                     onChange={(e) => setDraft({ ...draft, coolingStatus: e.target.value })}
                   >
                     {["جيد", "نقص ماء", "تسرب", "عطل مروحة"].map((o) => (
+                      <option key={o}>{o}</option>
+                    ))}
+                  </select>
+                </L>
+                <L label="حالة البطارية">
+                  <select
+                    className="field"
+                    value={draft.batteryStatus ?? "جيدة"}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDraft({
+                        ...draft,
+                        batteryStatus: v,
+                        batteryChangedOn: v === "تم التبديل" ? todayKey() : undefined,
+                      });
+                    }}
+                  >
+                    {["جيدة", "ضعيفة", "تم التبديل"].map((o) => (
                       <option key={o}>{o}</option>
                     ))}
                   </select>
@@ -228,6 +306,28 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
                   />
                 </L>
               </div>
+
+              {(selectedGen?.lastOilChange ||
+                selectedGen?.lastFilterChange ||
+                selectedGen?.lastBatteryChange ||
+                draft.oilChangedOn ||
+                draft.filterChangedOn ||
+                draft.batteryChangedOn) && (
+                <div className="mt-4 grid gap-2 rounded-lg border border-border bg-secondary/40 p-3 text-xs sm:grid-cols-3">
+                  <p>
+                    <span className="font-bold">تاريخ تبديل الزيت: </span>
+                    {draft.oilChangedOn ?? selectedGen?.lastOilChange ?? "—"}
+                  </p>
+                  <p>
+                    <span className="font-bold">تاريخ تبديل الفلتر: </span>
+                    {draft.filterChangedOn ?? selectedGen?.lastFilterChange ?? "—"}
+                  </p>
+                  <p>
+                    <span className="font-bold">تاريخ تبديل البطارية: </span>
+                    {draft.batteryChangedOn ?? selectedGen?.lastBatteryChange ?? "—"}
+                  </p>
+                </div>
+              )}
 
               <L label="ملاحظات العمل المنجز">
                 <textarea

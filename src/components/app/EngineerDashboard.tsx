@@ -13,6 +13,7 @@ import {
 import {
   STATUS_CLASS,
   STATUS_LABEL,
+  todayKey,
   uid,
   type GenStatus,
   type Generator,
@@ -71,6 +72,7 @@ export function EngineerDashboard({
   const [genDraft, setGenDraft] = useState<Generator | null>(null);
   const [techDraft, setTechDraft] = useState<User | null>(null);
   const [techError, setTechError] = useState<string | null>(null);
+  const [reportView, setReportView] = useState<Report | null>(null);
 
   const technicians = users.filter((u) => u.role === "technician");
 
@@ -232,8 +234,22 @@ export function EngineerDashboard({
                               {STATUS_LABEL[g.status]}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">
-                            {last ? `${last.date} — ${last.maintenanceType}` : "لا يوجد"}
+                          <td className="px-4 py-3 text-xs">
+                            {last ? (
+                              <button
+                                type="button"
+                                onClick={() => setReportView(last)}
+                                className={
+                                  last.date === todayKey()
+                                    ? "rounded-full border border-destructive/40 bg-destructive/15 px-3 py-1 font-bold text-destructive hover:bg-destructive/25"
+                                    : "text-muted-foreground underline-offset-2 hover:underline"
+                                }
+                              >
+                                {last.date} — {last.maintenanceType}
+                              </button>
+                            ) : (
+                              <span className="text-muted-foreground">لا يوجد</span>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
@@ -356,9 +372,68 @@ export function EngineerDashboard({
               </select>
             </Field>
           </div>
+          {(genDraft.lastOilChange || genDraft.lastFilterChange || genDraft.lastBatteryChange) && (
+            <div className="mt-4 grid gap-2 rounded-lg border border-border bg-secondary/40 p-3 text-xs sm:grid-cols-3">
+              <p>
+                <span className="font-bold">تاريخ تبديل الزيت: </span>
+                {genDraft.lastOilChange ?? "—"}
+              </p>
+              <p>
+                <span className="font-bold">تاريخ تبديل الفلتر: </span>
+                {genDraft.lastFilterChange ?? "—"}
+              </p>
+              <p>
+                <span className="font-bold">تاريخ تبديل البطارية: </span>
+                {genDraft.lastBatteryChange ?? "—"}
+              </p>
+            </div>
+          )}
           <button className="btn-primary mt-5 w-full" onClick={saveGen}>
             حفظ
           </button>
+        </Modal>
+      ) : null}
+
+      {reportView ? (
+        <Modal
+          title={`تقرير يوم ${reportView.date} — ${generators.find((g) => g.id === reportView.generatorId)?.name || ""}`}
+          onClose={() => setReportView(null)}
+        >
+          <div className="grid gap-2 text-sm sm:grid-cols-2">
+            <R label="الفني" value={reportView.techName} />
+            <R label="قراءة العداد (ساعات)" value={reportView.meterHours || "—"} />
+            <R label="نوع الصيانة" value={reportView.maintenanceType} />
+            <R label="حالة الزيت" value={reportView.oilStatus} />
+            <R label="حالة الفلتر" value={reportView.filterStatus} />
+            <R label="منظومة التبريد" value={reportView.coolingStatus} />
+            <R label="حالة البطارية" value={reportView.batteryStatus || "—"} />
+            <R label="فولتية البطارية" value={reportView.batteryVoltage ? `${reportView.batteryVoltage} V` : "—"} />
+            <R label="فولتية الشحن" value={reportView.chargingVoltage ? `${reportView.chargingVoltage} V` : "—"} />
+            <R label="تاريخ تبديل الزيت" value={reportView.oilChangedOn ?? "—"} />
+            <R label="تاريخ تبديل الفلتر" value={reportView.filterChangedOn ?? "—"} />
+            <R label="تاريخ تبديل البطارية" value={reportView.batteryChangedOn ?? "—"} />
+          </div>
+          <div className="mt-3 text-sm">
+            <p className="mb-1 font-bold">ملاحظات العمل المنجز</p>
+            <p className="rounded-lg border border-border bg-secondary/40 p-3">
+              {reportView.notes.trim() || "لا توجد ملاحظات."}
+            </p>
+          </div>
+          {reportView.photos.length > 0 ? (
+            <div className="mt-3">
+              <p className="mb-2 text-sm font-bold">الصور الميدانية ({reportView.photos.length})</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {reportView.photos.map((src, i) => (
+                  <img
+                    key={i}
+                    src={src}
+                    alt={`صورة ميدانية ${i + 1}`}
+                    className="h-32 w-full rounded-lg object-cover"
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
         </Modal>
       ) : null}
 
@@ -424,6 +499,15 @@ export function EngineerDashboard({
         </Modal>
       ) : null}
     </div>
+  );
+}
+
+function R({ label, value }: { label: string; value: string }) {
+  return (
+    <p className="rounded-lg border border-border bg-secondary/40 px-3 py-2">
+      <span className="mb-0.5 block text-xs font-bold text-muted-foreground">{label}</span>
+      {value}
+    </p>
   );
 }
 
