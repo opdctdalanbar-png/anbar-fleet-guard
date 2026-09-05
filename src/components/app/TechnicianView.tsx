@@ -307,6 +307,28 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
                 </L>
               </div>
 
+              {(selectedGen?.lastOilChange ||
+                selectedGen?.lastFilterChange ||
+                selectedGen?.lastBatteryChange ||
+                draft.oilChangedOn ||
+                draft.filterChangedOn ||
+                draft.batteryChangedOn) && (
+                <div className="mt-4 grid gap-2 rounded-lg border border-border bg-secondary/40 p-3 text-xs sm:grid-cols-3">
+                  <p>
+                    <span className="font-bold">تاريخ تبديل الزيت: </span>
+                    {draft.oilChangedOn ?? selectedGen?.lastOilChange ?? "—"}
+                  </p>
+                  <p>
+                    <span className="font-bold">تاريخ تبديل الفلتر: </span>
+                    {draft.filterChangedOn ?? selectedGen?.lastFilterChange ?? "—"}
+                  </p>
+                  <p>
+                    <span className="font-bold">تاريخ تبديل البطارية: </span>
+                    {draft.batteryChangedOn ?? selectedGen?.lastBatteryChange ?? "—"}
+                  </p>
+                </div>
+              )}
+
               <L label="ملاحظات العمل المنجز">
                 <textarea
                   className="field mt-4 min-h-24"
