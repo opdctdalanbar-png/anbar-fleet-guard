@@ -226,7 +226,14 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
                   <select
                     className="field"
                     value={draft.oilStatus}
-                    onChange={(e) => setDraft({ ...draft, oilStatus: e.target.value })}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDraft({
+                        ...draft,
+                        oilStatus: v,
+                        oilChangedOn: v === "تم التبديل" ? todayKey() : undefined,
+                      });
+                    }}
                   >
                     {["جيد", "يحتاج إضافة", "تم التبديل", "ضعيف"].map((o) => (
                       <option key={o}>{o}</option>
@@ -237,7 +244,14 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
                   <select
                     className="field"
                     value={draft.filterStatus}
-                    onChange={(e) => setDraft({ ...draft, filterStatus: e.target.value })}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDraft({
+                        ...draft,
+                        filterStatus: v,
+                        filterChangedOn: v === "تم التبديل" ? todayKey() : undefined,
+                      });
+                    }}
                   >
                     {["جيد", "يحتاج تنظيف", "تم التبديل", "تالف"].map((o) => (
                       <option key={o}>{o}</option>
@@ -251,6 +265,24 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
                     onChange={(e) => setDraft({ ...draft, coolingStatus: e.target.value })}
                   >
                     {["جيد", "نقص ماء", "تسرب", "عطل مروحة"].map((o) => (
+                      <option key={o}>{o}</option>
+                    ))}
+                  </select>
+                </L>
+                <L label="حالة البطارية">
+                  <select
+                    className="field"
+                    value={draft.batteryStatus ?? "جيدة"}
+                    onChange={(e) => {
+                      const v = e.target.value;
+                      setDraft({
+                        ...draft,
+                        batteryStatus: v,
+                        batteryChangedOn: v === "تم التبديل" ? todayKey() : undefined,
+                      });
+                    }}
+                  >
+                    {["جيدة", "ضعيفة", "تم التبديل"].map((o) => (
                       <option key={o}>{o}</option>
                     ))}
                   </select>
