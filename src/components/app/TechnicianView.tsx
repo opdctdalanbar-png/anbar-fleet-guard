@@ -33,6 +33,7 @@ const blank = (generatorId: string, user: User): Report => ({
   oilStatus: "جيد",
   filterStatus: "جيد",
   coolingStatus: "جيد",
+  batteryStatus: "جيدة",
   batteryVoltage: "",
   chargingVoltage: "",
   notes: "",
@@ -48,6 +49,28 @@ export function TechnicianView({ user, generators, reports, onSubmitReport, onLo
   const [selected, setSelected] = useState<string | null>(null);
   const [draft, setDraft] = useState<Report | null>(null);
   const [saved, setSaved] = useState(false);
+  const [subFilter, setSubFilter] = useState("all");
+
+  const subLocations = useMemo(
+    () =>
+      Array.from(
+        new Set(mine.map((g) => g.specificLocation.trim()).filter((s) => s.length > 0)),
+      ),
+    [mine],
+  );
+
+  const visible = useMemo(
+    () =>
+      subFilter === "all"
+        ? mine
+        : mine.filter((g) => g.specificLocation.trim() === subFilter),
+    [mine, subFilter],
+  );
+
+  const selectedGen = useMemo(
+    () => generators.find((g) => g.id === selected) ?? null,
+    [generators, selected],
+  );
 
   const openGenerator = (g: Generator) => {
     const existing = reports.find((r) => r.generatorId === g.id && r.date === todayKey());
