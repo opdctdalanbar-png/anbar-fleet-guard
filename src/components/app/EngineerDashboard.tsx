@@ -39,6 +39,7 @@ const emptyGen = (): Generator => ({
   code: "",
   name: "",
   location: "",
+  specificLocation: "",
   capacity: "",
   status: "working",
   createdAt: new Date().toISOString(),
