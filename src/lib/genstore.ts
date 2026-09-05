@@ -42,9 +42,9 @@ export type Report = {
   batteryStatus?: string;
   batteryVoltage: string;
   chargingVoltage: string;
-  oilChangedOn?: string;
-  filterChangedOn?: string;
-  batteryChangedOn?: string;
+  oilChangedOn?: string | undefined;
+  filterChangedOn?: string | undefined;
+  batteryChangedOn?: string | undefined;
   notes: string;
   photos: string[];
   createdAt: string;
