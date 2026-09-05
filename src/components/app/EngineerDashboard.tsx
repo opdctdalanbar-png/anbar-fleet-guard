@@ -13,6 +13,7 @@ import {
 import {
   STATUS_CLASS,
   STATUS_LABEL,
+  todayKey,
   uid,
   type GenStatus,
   type Generator,
@@ -71,6 +72,7 @@ export function EngineerDashboard({
   const [genDraft, setGenDraft] = useState<Generator | null>(null);
   const [techDraft, setTechDraft] = useState<User | null>(null);
   const [techError, setTechError] = useState<string | null>(null);
+  const [reportView, setReportView] = useState<Report | null>(null);
 
   const technicians = users.filter((u) => u.role === "technician");
 
@@ -232,8 +234,22 @@ export function EngineerDashboard({
                               {STATUS_LABEL[g.status]}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-xs text-muted-foreground">
-                            {last ? `${last.date} — ${last.maintenanceType}` : "لا يوجد"}
+                          <td className="px-4 py-3 text-xs">
+                            {last ? (
+                              <button
+                                type="button"
+                                onClick={() => setReportView(last)}
+                                className={
+                                  last.date === todayKey()
+                                    ? "rounded-full border border-destructive/40 bg-destructive/15 px-3 py-1 font-bold text-destructive hover:bg-destructive/25"
+                                    : "text-muted-foreground underline-offset-2 hover:underline"
+                                }
+                              >
+                                {last.date} — {last.maintenanceType}
+                              </button>
+                            ) : (
+                              <span className="text-muted-foreground">لا يوجد</span>
+                            )}
                           </td>
                           <td className="px-4 py-3">
                             <div className="flex gap-2">
