@@ -372,9 +372,68 @@ export function EngineerDashboard({
               </select>
             </Field>
           </div>
+          {(genDraft.lastOilChange || genDraft.lastFilterChange || genDraft.lastBatteryChange) && (
+            <div className="mt-4 grid gap-2 rounded-lg border border-border bg-secondary/40 p-3 text-xs sm:grid-cols-3">
+              <p>
+                <span className="font-bold">تاريخ تبديل الزيت: </span>
+                {genDraft.lastOilChange ?? "—"}
+              </p>
+              <p>
+                <span className="font-bold">تاريخ تبديل الفلتر: </span>
+                {genDraft.lastFilterChange ?? "—"}
+              </p>
+              <p>
+                <span className="font-bold">تاريخ تبديل البطارية: </span>
+                {genDraft.lastBatteryChange ?? "—"}
+              </p>
+            </div>
+          )}
           <button className="btn-primary mt-5 w-full" onClick={saveGen}>
             حفظ
           </button>
+        </Modal>
+      ) : null}
+
+      {reportView ? (
+        <Modal
+          title={`تقرير يوم ${reportView.date} — ${generators.find((g) => g.id === reportView.generatorId)?.name || ""}`}
+          onClose={() => setReportView(null)}
+        >
+          <div className="grid gap-2 text-sm sm:grid-cols-2">
+            <R label="الفني" value={reportView.techName} />
+            <R label="قراءة العداد (ساعات)" value={reportView.meterHours || "—"} />
+            <R label="نوع الصيانة" value={reportView.maintenanceType} />
+            <R label="حالة الزيت" value={reportView.oilStatus} />
+            <R label="حالة الفلتر" value={reportView.filterStatus} />
+            <R label="منظومة التبريد" value={reportView.coolingStatus} />
+            <R label="حالة البطارية" value={reportView.batteryStatus || "—"} />
+            <R label="فولتية البطارية" value={reportView.batteryVoltage ? `${reportView.batteryVoltage} V` : "—"} />
+            <R label="فولتية الشحن" value={reportView.chargingVoltage ? `${reportView.chargingVoltage} V` : "—"} />
+            <R label="تاريخ تبديل الزيت" value={reportView.oilChangedOn ?? "—"} />
+            <R label="تاريخ تبديل الفلتر" value={reportView.filterChangedOn ?? "—"} />
+            <R label="تاريخ تبديل البطارية" value={reportView.batteryChangedOn ?? "—"} />
+          </div>
+          <div className="mt-3 text-sm">
+            <p className="mb-1 font-bold">ملاحظات العمل المنجز</p>
+            <p className="rounded-lg border border-border bg-secondary/40 p-3">
+              {reportView.notes.trim() || "لا توجد ملاحظات."}
+            </p>
+          </div>
+          {reportView.photos.length > 0 ? (
+            <div className="mt-3">
+              <p className="mb-2 text-sm font-bold">الصور الميدانية ({reportView.photos.length})</p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {reportView.photos.map((src, i) => (
+                  <img
+                    key={i}
+                    src={src}
+                    alt={`صورة ميدانية ${i + 1}`}
+                    className="h-32 w-full rounded-lg object-cover"
+                  />
+                ))}
+              </div>
+            </div>
+          ) : null}
         </Modal>
       ) : null}
 
