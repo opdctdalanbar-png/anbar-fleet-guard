@@ -39,6 +39,7 @@ const emptyGen = (): Generator => ({
   code: "",
   name: "",
   location: "",
+  specificLocation: "",
   capacity: "",
   status: "working",
   createdAt: new Date().toISOString(),
@@ -198,6 +199,7 @@ export function EngineerDashboard({
                           الموقع العام <ArrowUpDown className="size-3.5" />
                         </button>
                       </th>
+                      <th className="px-4 py-3 font-semibold">الموقع الخاص</th>
                       <th className="px-4 py-3 font-semibold">القدرة</th>
                       <th className="px-4 py-3 font-semibold">
                         <button
@@ -221,6 +223,7 @@ export function EngineerDashboard({
                           <td className="px-4 py-3 font-mono text-xs">{g.code}</td>
                           <td className="px-4 py-3 font-semibold">{g.name}</td>
                           <td className="px-4 py-3">{g.location}</td>
+                          <td className="px-4 py-3">{g.specificLocation || "—"}</td>
                           <td className="px-4 py-3">{g.capacity || "—"}</td>
                           <td className="px-4 py-3">
                             <span
@@ -322,6 +325,15 @@ export function EngineerDashboard({
                 placeholder="مثال: شعبة هيت، شعبة القائم"
                 value={genDraft.location}
                 onChange={(e) => setGenDraft({ ...genDraft, location: e.target.value })}
+              />
+            </Field>
+            <Field label="الموقع الخاص (إدخال حر)">
+              <input
+                type="text"
+                className="field"
+                placeholder="مثال: محطة هيت، مستودع الرمادي"
+                value={genDraft.specificLocation}
+                onChange={(e) => setGenDraft({ ...genDraft, specificLocation: e.target.value })}
               />
             </Field>
             <Field label="القدرة (KVA)">

@@ -17,6 +17,7 @@ export type Generator = {
   code: string;
   name: string;
   location: string;
+  specificLocation: string;
   capacity: string;
   status: GenStatus;
   createdAt: string;
