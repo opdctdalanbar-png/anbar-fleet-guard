@@ -42,6 +42,8 @@ const emptyGen = (): Generator => ({
   location: "",
   specificLocation: "",
   capacity: "",
+  engineSerial: "",
+  alternatorSerial: "",
   status: "working",
   createdAt: new Date().toISOString(),
 });
@@ -358,6 +360,22 @@ export function EngineerDashboard({
                 className="field"
                 value={genDraft.capacity}
                 onChange={(e) => setGenDraft({ ...genDraft, capacity: e.target.value })}
+              />
+            </Field>
+            <Field label="رقم المحرك (إدخال حر)">
+              <input
+                type="text"
+                className="field"
+                value={genDraft.engineSerial ?? ""}
+                onChange={(e) => setGenDraft({ ...genDraft, engineSerial: e.target.value })}
+              />
+            </Field>
+            <Field label="رقم رأس التوليد (إدخال حر)">
+              <input
+                type="text"
+                className="field"
+                value={genDraft.alternatorSerial ?? ""}
+                onChange={(e) => setGenDraft({ ...genDraft, alternatorSerial: e.target.value })}
               />
             </Field>
             <Field label="الحالة">

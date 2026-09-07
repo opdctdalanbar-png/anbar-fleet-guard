@@ -1,9 +1,11 @@
 import { useMemo, useState } from "react";
-import { Gauge, CircleCheck, TriangleAlert, FileText } from "lucide-react";
+import { Gauge, CircleCheck, TriangleAlert, FileText, Printer, Filter } from "lucide-react";
 import {
+  MAINT_CLASS,
   STATUS_CLASS,
   STATUS_LABEL,
   type Generator,
+  type MaintenanceType,
   type Report,
   type User,
 } from "@/lib/genstore";
@@ -17,8 +19,14 @@ type Props = {
   onLogout: () => void;
 };
 
+const MAINT_OPTIONS: MaintenanceType[] = ["لا يوجد", "صيانة وقائية", "صيانة طارئة", "عطل دائم"];
+
 export function AuditorView({ user, generators, reports, onLogout }: Props) {
   const [openReport, setOpenReport] = useState<Report | null>(null);
+  const [fDate, setFDate] = useState("");
+  const [fLocation, setFLocation] = useState("all");
+  const [fMaint, setFMaint] = useState("all");
+  const [fTech, setFTech] = useState("all");
 
   const stats = useMemo(
     () => ({
@@ -29,16 +37,35 @@ export function AuditorView({ user, generators, reports, onLogout }: Props) {
     [generators],
   );
 
-  const sortedReports = useMemo(
-    () => [...reports].sort((a, b) => b.createdAt.localeCompare(a.createdAt)),
+  const locations = useMemo(
+    () => Array.from(new Set(generators.map((g) => g.location).filter(Boolean))).sort(),
+    [generators],
+  );
+  const techNames = useMemo(
+    () => Array.from(new Set(reports.map((r) => r.techName).filter(Boolean))).sort(),
     [reports],
   );
+
+  const filteredReports = useMemo(() => {
+    return [...reports]
+      .filter((r) => {
+        if (fDate && r.date !== fDate) return false;
+        const gen = generators.find((g) => g.id === r.generatorId);
+        if (fLocation !== "all" && gen?.location !== fLocation) return false;
+        if (fMaint !== "all" && r.maintenanceType !== fMaint) return false;
+        if (fTech !== "all" && r.techName !== fTech) return false;
+        return true;
+      })
+      .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  }, [reports, generators, fDate, fLocation, fMaint, fTech]);
+
+  const hasFilters = fDate || fLocation !== "all" || fMaint !== "all" || fTech !== "all";
 
   return (
     <div className="min-h-screen bg-background">
       <Banner userName={user.name} roleLabel="المدقق الرسمي (اطلاع فقط)" onLogout={onLogout} />
       <main className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6">
-        <div className="grid gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
           <StatCard icon={Gauge} label="مجموع المولدات" value={stats.total} tone="primary" />
           <StatCard icon={CircleCheck} label="قيد العمل" value={stats.active} tone="success" />
           <StatCard
@@ -50,16 +77,93 @@ export function AuditorView({ user, generators, reports, onLogout }: Props) {
         </div>
 
         <section className="panel overflow-hidden">
-          <h2 className="border-b border-border px-5 py-4 text-base font-bold">
-            سجل التقارير اليومية
-          </h2>
-          {sortedReports.length === 0 ? (
+          <div className="flex flex-wrap items-center justify-between gap-3 border-b border-border px-5 py-4">
+            <h2 className="text-base font-bold">سجل التقارير اليومية</h2>
+            <button className="btn-primary" onClick={() => window.print()}>
+              <Printer className="size-4" /> إصدار / طباعة التقرير
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-3 border-b border-border bg-secondary/40 px-5 py-4">
+            <span className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+              <Filter className="size-4" /> تصفية
+            </span>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold">التاريخ</span>
+              <input
+                type="date"
+                className="field w-auto"
+                value={fDate}
+                onChange={(e) => setFDate(e.target.value)}
+              />
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold">الموقع العام</span>
+              <select
+                className="field w-auto"
+                value={fLocation}
+                onChange={(e) => setFLocation(e.target.value)}
+              >
+                <option value="all">كل المواقع</option>
+                {locations.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold">نوع الصيانة</span>
+              <select
+                className="field w-auto"
+                value={fMaint}
+                onChange={(e) => setFMaint(e.target.value)}
+              >
+                <option value="all">كل الأنواع</option>
+                {MAINT_OPTIONS.map((m) => (
+                  <option key={m} value={m}>
+                    {m}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="block">
+              <span className="mb-1 block text-xs font-semibold">الفني</span>
+              <select
+                className="field w-auto"
+                value={fTech}
+                onChange={(e) => setFTech(e.target.value)}
+              >
+                <option value="all">كل الفنيين</option>
+                {techNames.map((t) => (
+                  <option key={t} value={t}>
+                    {t}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {hasFilters ? (
+              <button
+                className="btn-soft"
+                onClick={() => {
+                  setFDate("");
+                  setFLocation("all");
+                  setFMaint("all");
+                  setFTech("all");
+                }}
+              >
+                مسح التصفية
+              </button>
+            ) : null}
+          </div>
+
+          {filteredReports.length === 0 ? (
             <p className="px-5 py-10 text-center text-sm text-muted-foreground">
-              لا توجد تقارير مسجلة حتى الآن.
+              {hasFilters ? "لا توجد تقارير مطابقة للتصفية الحالية." : "لا توجد تقارير مسجلة حتى الآن."}
             </p>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full text-right text-sm">
+              <table className="w-full whitespace-nowrap text-right text-sm">
                 <thead className="bg-secondary/70 text-xs text-muted-foreground">
                   <tr>
                     <th className="px-4 py-3 font-semibold">التاريخ</th>
@@ -72,7 +176,7 @@ export function AuditorView({ user, generators, reports, onLogout }: Props) {
                   </tr>
                 </thead>
                 <tbody>
-                  {sortedReports.map((r) => {
+                  {filteredReports.map((r) => {
                     const gen = generators.find((g) => g.id === r.generatorId);
                     return (
                       <tr key={r.id} className="border-t border-border">
@@ -82,8 +186,14 @@ export function AuditorView({ user, generators, reports, onLogout }: Props) {
                         </td>
                         <td className="px-4 py-3">{gen?.location ?? "—"}</td>
                         <td className="px-4 py-3">{r.techName}</td>
-                        <td className="px-4 py-3">{r.maintenanceType}</td>
-                        <td className="px-4 py-3">{r.meterHours}</td>
+                        <td className="px-4 py-3">
+                          <span
+                            className={`inline-block rounded-full border px-3 py-1 text-xs font-bold ${MAINT_CLASS[r.maintenanceType]}`}
+                          >
+                            {r.maintenanceType}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">{r.meterHours || "—"}</td>
                         <td className="px-4 py-3">
                           <button className="btn-soft" onClick={() => setOpenReport(r)}>
                             <FileText className="size-4" />
@@ -114,7 +224,7 @@ export function AuditorView({ user, generators, reports, onLogout }: Props) {
                     <span className="font-normal text-muted-foreground">({g.location})</span>
                   </span>
                   <span
-                    className={`rounded-full border px-3 py-1 text-xs font-bold ${STATUS_CLASS[g.status]}`}
+                    className={`whitespace-nowrap rounded-full border px-3 py-1 text-xs font-bold ${STATUS_CLASS[g.status]}`}
                   >
                     {STATUS_LABEL[g.status]}
                   </span>
