@@ -1,16 +1,10 @@
 import { useState } from "react";
-import { KeyRound, User as UserIcon, ShieldCheck, HardHat, Wrench } from "lucide-react";
+import { KeyRound, User as UserIcon } from "lucide-react";
 import { Banner } from "./Banner";
 
 type Props = {
   onLogin: (username: string, password: string) => string | null;
 };
-
-const helpers = [
-  { icon: HardHat, role: "مهندس النظام (مسؤول)", u: "eng_admin", p: "Eng#2026" },
-  { icon: ShieldCheck, role: "المدقق الرسمي", u: "official_user", p: "Auth#2026" },
-  { icon: Wrench, role: "الفني الميداني", u: "tech_anbar", p: "Tech#2026" },
-];
 
 export function Login({ onLogin }: Props) {
   const [username, setUsername] = useState("");
@@ -20,8 +14,8 @@ export function Login({ onLogin }: Props) {
   return (
     <div className="min-h-screen bg-background">
       <Banner />
-      <main className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-8 sm:px-6 lg:grid-cols-2">
-        <section className="panel p-6">
+      <main className="mx-auto flex w-full max-w-xl justify-center px-4 py-8 sm:px-6">
+        <section className="panel w-full p-6">
           <h2 className="text-lg font-bold">تسجيل الدخول إلى منظومة وحدة المولدات</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             أدخل اسم المستخدم وكلمة المرور الخاصة بحسابك.
@@ -67,35 +61,9 @@ export function Login({ onLogin }: Props) {
               </p>
             ) : null}
             <button type="submit" className="btn-primary w-full">
-              دخول
+              تسجيل الدخول
             </button>
           </form>
-        </section>
-
-        <section className="panel p-6">
-          <h2 className="text-lg font-bold">بيانات الدخول الفعالة</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            الحسابات الأساسية للنظام، إضافةً إلى أي حساب فني يضيفه المهندس.
-          </p>
-          <ul className="mt-5 space-y-3">
-            {helpers.map((h) => (
-              <li
-                key={h.u}
-                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-secondary/60 px-4 py-3"
-              >
-                <span className="flex items-center gap-3">
-                  <span className="grid size-9 place-items-center rounded-lg bg-primary/12 text-primary">
-                    <h.icon className="size-4" />
-                  </span>
-                  <span className="text-sm font-semibold">{h.role}</span>
-                </span>
-                <span className="text-left font-mono text-xs leading-5 text-muted-foreground">
-                  <span className="block">{h.u}</span>
-                  <span className="block">{h.p}</span>
-                </span>
-              </li>
-            ))}
-          </ul>
         </section>
       </main>
     </div>
