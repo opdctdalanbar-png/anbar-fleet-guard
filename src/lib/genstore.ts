@@ -19,6 +19,8 @@ export type Generator = {
   location: string;
   specificLocation: string;
   capacity: string;
+  engineSerial?: string;
+  alternatorSerial?: string;
   status: GenStatus;
   lastOilChange?: string | undefined;
   lastFilterChange?: string | undefined;
@@ -157,4 +159,11 @@ export const STATUS_CLASS: Record<GenStatus, string> = {
   working: "bg-success/15 text-success border-success/30",
   preventive: "bg-warning/15 text-warning border-warning/30",
   fault: "bg-destructive/15 text-destructive border-destructive/30",
+};
+
+export const MAINT_CLASS: Record<MaintenanceType, string> = {
+  "لا يوجد": "bg-success/15 text-success border-success/30",
+  "صيانة وقائية": "bg-warning/15 text-warning border-warning/30",
+  "صيانة طارئة": "bg-destructive/15 text-destructive border-destructive/30",
+  "عطل دائم": "bg-destructive/15 text-destructive border-destructive/30",
 };
