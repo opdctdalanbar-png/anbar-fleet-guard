@@ -245,7 +245,38 @@ export function AuditorView({ user, generators, reports, onLogout }: Props) {
             className="panel max-h-[85vh] w-full max-w-2xl overflow-y-auto p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="text-lg font-bold">تفاصيل التقرير — {openReport.date}</h3>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <h3 className="text-lg font-bold">تفاصيل التقرير — {openReport.date}</h3>
+              <button className="btn-primary" onClick={() => window.print()}>
+                <Printer className="size-4" /> طباعة التقرير الفني
+              </button>
+            </div>
+            {(() => {
+              const g = generators.find((x) => x.id === openReport.generatorId);
+              return (
+                <div className="mt-4 rounded-lg border border-border bg-secondary/40 p-3">
+                  <p className="mb-2 text-xs font-bold text-muted-foreground">بيانات المولدة</p>
+                  <dl className="grid gap-2 sm:grid-cols-2">
+                    {[
+                      ["رمز المولدة", g?.code],
+                      ["اسم / نوع المولدة", g?.name],
+                      ["الموقع العام", g?.location],
+                      ["الموقع الخاص", g?.specificLocation],
+                      ["رقم المحرك", g?.engineSerial],
+                      ["رقم رأس التوليد", g?.alternatorSerial],
+                    ].map(([k, v]) => (
+                      <div
+                        key={k}
+                        className="rounded-lg border border-border bg-card px-3 py-2"
+                      >
+                        <dt className="text-xs text-muted-foreground">{k}</dt>
+                        <dd className="text-sm font-semibold">{v || "—"}</dd>
+                      </div>
+                    ))}
+                  </dl>
+                </div>
+              );
+            })()}
             <dl className="mt-4 grid gap-3 sm:grid-cols-2">
               {[
                 ["الفني", openReport.techName],
