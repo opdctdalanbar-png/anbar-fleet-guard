@@ -10,6 +10,7 @@ import {
   type User,
 } from "@/lib/genstore";
 import { Banner } from "./Banner";
+import { ReportPrintSheet } from "./ReportPrintSheet";
 import { StatCard } from "./StatCard";
 
 type Props = {
