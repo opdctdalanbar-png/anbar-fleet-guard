@@ -316,6 +316,13 @@ export function AuditorView({ user, generators, reports, onLogout }: Props) {
           </div>
         </div>
       ) : null}
+
+      {openReport ? (
+        <ReportPrintSheet
+          report={openReport}
+          generator={generators.find((g) => g.id === openReport.generatorId)}
+        />
+      ) : null}
     </div>
   );
 }
