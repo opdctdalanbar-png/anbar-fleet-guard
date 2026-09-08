@@ -108,6 +108,35 @@
   }
 }
 
+/* Print: only the official A4 report sheet is visible */
+#print-sheet {
+  display: none;
+}
+
+@media print {
+  body > *:not(#print-sheet) {
+    display: none !important;
+  }
+
+  #print-sheet {
+    display: block !important;
+    color: #000;
+    background: #fff;
+  }
+
+  .print-page {
+    max-width: 190mm;
+    margin: 0 auto;
+    padding: 8mm 4mm;
+    font-family: var(--font-sans);
+  }
+
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+}
+
 @utility field {
   width: 100%;
   border-radius: var(--radius-md);

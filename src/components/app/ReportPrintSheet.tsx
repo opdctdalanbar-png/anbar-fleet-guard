@@ -6,7 +6,7 @@ type Props = {
   generator?: Generator | undefined;
 };
 
-function Row({ label, value }: { label: string; value?: string }) {
+function Row({ label, value }: { label: string; value?: string | undefined }) {
   return (
     <tr>
       <th className="w-40 border border-gray-400 bg-gray-100 px-3 py-1.5 text-right font-bold">
