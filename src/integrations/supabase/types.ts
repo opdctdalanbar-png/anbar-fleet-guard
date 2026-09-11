@@ -14,16 +14,188 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      generators: {
+        Row: {
+          alternator_serial: string | null
+          capacity: string
+          code: string
+          created_at: string
+          engine_serial: string | null
+          id: string
+          last_battery_change: string | null
+          last_filter_change: string | null
+          last_oil_change: string | null
+          location: string
+          name: string
+          specific_location: string
+          status: string
+        }
+        Insert: {
+          alternator_serial?: string | null
+          capacity?: string
+          code: string
+          created_at?: string
+          engine_serial?: string | null
+          id?: string
+          last_battery_change?: string | null
+          last_filter_change?: string | null
+          last_oil_change?: string | null
+          location?: string
+          name?: string
+          specific_location?: string
+          status?: string
+        }
+        Update: {
+          alternator_serial?: string | null
+          capacity?: string
+          code?: string
+          created_at?: string
+          engine_serial?: string | null
+          id?: string
+          last_battery_change?: string | null
+          last_filter_change?: string | null
+          last_oil_change?: string | null
+          location?: string
+          name?: string
+          specific_location?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          id: string
+          location: string
+          name: string
+          phone: string | null
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          location?: string
+          name: string
+          phone?: string | null
+          username: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          location?: string
+          name?: string
+          phone?: string | null
+          username?: string
+        }
+        Relationships: []
+      }
+      reports: {
+        Row: {
+          battery_changed_on: string | null
+          battery_status: string | null
+          battery_voltage: string
+          charging_voltage: string
+          cooling_status: string
+          created_at: string
+          date: string
+          filter_changed_on: string | null
+          filter_status: string
+          generator_id: string
+          id: string
+          maintenance_type: string
+          meter_hours: string
+          notes: string
+          oil_changed_on: string | null
+          oil_status: string
+          photos: string[]
+          tech_id: string
+          tech_name: string
+        }
+        Insert: {
+          battery_changed_on?: string | null
+          battery_status?: string | null
+          battery_voltage?: string
+          charging_voltage?: string
+          cooling_status?: string
+          created_at?: string
+          date: string
+          filter_changed_on?: string | null
+          filter_status?: string
+          generator_id: string
+          id?: string
+          maintenance_type?: string
+          meter_hours?: string
+          notes?: string
+          oil_changed_on?: string | null
+          oil_status?: string
+          photos?: string[]
+          tech_id: string
+          tech_name?: string
+        }
+        Update: {
+          battery_changed_on?: string | null
+          battery_status?: string | null
+          battery_voltage?: string
+          charging_voltage?: string
+          cooling_status?: string
+          created_at?: string
+          date?: string
+          filter_changed_on?: string | null
+          filter_status?: string
+          generator_id?: string
+          id?: string
+          maintenance_type?: string
+          meter_hours?: string
+          notes?: string
+          oil_changed_on?: string | null
+          oil_status?: string
+          photos?: string[]
+          tech_id?: string
+          tech_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reports_generator_id_fkey"
+            columns: ["generator_id"]
+            isOneToOne: false
+            referencedRelation: "generators"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "engineer" | "auditor" | "technician"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +322,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["engineer", "auditor", "technician"],
+    },
   },
 } as const
