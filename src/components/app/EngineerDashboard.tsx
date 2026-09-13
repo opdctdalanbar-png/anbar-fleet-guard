@@ -118,8 +118,13 @@ export function EngineerDashboard({
 
   const saveTech = () => {
     if (!techDraft) return;
-    if (!techDraft.name.trim() || !techDraft.username.trim() || !techDraft.password.trim()) {
-      setTechError("الرجاء إكمال الاسم واسم المستخدم وكلمة المرور.");
+    const isNew = !users.some((u) => u.id === techDraft.id);
+    if (!techDraft.name.trim() || !techDraft.username.trim()) {
+      setTechError("الرجاء إكمال الاسم واسم المستخدم.");
+      return;
+    }
+    if (isNew && (techDraft.password ?? "").trim().length < 4) {
+      setTechError("كلمة المرور مطلوبة عند إنشاء حساب جديد (4 أحرف على الأقل).");
       return;
     }
     if (users.some((u) => u.username === techDraft.username.trim() && u.id !== techDraft.id)) {
