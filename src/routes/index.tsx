@@ -1,13 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { statusFromMaintenance, type Generator, type Report, type User } from "@/lib/genstore";
+import { emailForUsername } from "@/lib/accounts";
 import {
-  statusFromMaintenance,
-  store,
-  todayKey,
-  type Generator,
-  type Report,
-  type User,
-} from "@/lib/genstore";
+  createTechnician,
+  deleteTechnician,
+  ensureSeedAccounts,
+  updateTechnician,
+} from "@/lib/accounts.functions";
+import {
+  fetchGenerators,
+  fetchMyAccount,
+  fetchReports,
+  fetchUsers,
+  genToRow,
+  persistPhotos,
+  saveReport,
+} from "@/lib/db";
 import { Login } from "@/components/app/Login";
 import { EngineerDashboard } from "@/components/app/EngineerDashboard";
 import { AuditorView } from "@/components/app/AuditorView";
@@ -33,70 +43,194 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const [ready, setReady] = useState(false);
+  const [current, setCurrent] = useState<User | null>(null);
   const [users, setUsersState] = useState<User[]>([]);
   const [generators, setGeneratorsState] = useState<Generator[]>([]);
   const [reports, setReportsState] = useState<Report[]>([]);
-  const [currentId, setCurrentId] = useState<string | null>(null);
+  const busy = useRef(false);
 
-  useEffect(() => {
-    setUsersState(store.getUsers());
-    setGeneratorsState(store.getGenerators());
-    setReportsState(store.getReports());
-    setCurrentId(store.getSession());
-    setReady(true);
+  const loadData = useCallback(async () => {
+    const [u, g, r] = await Promise.all([fetchUsers(), fetchGenerators(), fetchReports()]);
+    setUsersState(u);
+    setGeneratorsState(g);
+    setReportsState(r);
   }, []);
 
-  const setUsers = (u: User[]) => {
-    setUsersState(u);
-    store.setUsers(u);
-  };
-  const setGenerators = (g: Generator[]) => {
-    setGeneratorsState(g);
-    store.setGenerators(g);
+  const loadSession = useCallback(async () => {
+    const { data } = await supabase.auth.getUser();
+    if (!data.user) {
+      setCurrent(null);
+      return;
+    }
+    const me = await fetchMyAccount(data.user.id);
+    setCurrent(me);
+    if (me) await loadData();
+  }, [loadData]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        await ensureSeedAccounts();
+      } catch {
+        /* accounts already exist */
+      }
+      if (!active) return;
+      await loadSession();
+      if (active) setReady(true);
+    })();
+
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "SIGNED_IN" || event === "SIGNED_OUT" || event === "USER_UPDATED") {
+        void loadSession();
+      }
+    });
+    return () => {
+      active = false;
+      sub.subscription.unsubscribe();
+    };
+  }, [loadSession]);
+
+  // Live refresh so newly added accounts, generators and reports show up at once.
+  useEffect(() => {
+    if (!current) return;
+    const channel = supabase
+      .channel("opdc-live")
+      .on("postgres_changes", { event: "*", schema: "public", table: "profiles" }, () => {
+        if (!busy.current) void loadData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "generators" }, () => {
+        if (!busy.current) void loadData();
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "reports" }, () => {
+        if (!busy.current) void loadData();
+      })
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [current, loadData]);
+
+  const run = async (fn: () => Promise<void>) => {
+    busy.current = true;
+    try {
+      await fn();
+      await loadData();
+    } catch (err) {
+      console.error(err);
+      await loadData();
+    } finally {
+      busy.current = false;
+    }
   };
 
-  const handleLogin = (username: string, password: string) => {
-    const list = store.getUsers();
-    setUsersState(list);
-    const found = list.find((u) => u.username === username && u.password === password);
-    if (!found) return "اسم المستخدم أو كلمة المرور غير صحيحة.";
-    setCurrentId(found.id);
-    store.setSession(found.id);
+  const setGenerators = (next: Generator[]) => {
+    setGeneratorsState(next);
+    void run(async () => {
+      const prevById = new Map(generators.map((g) => [g.id, g]));
+      const nextById = new Map(next.map((g) => [g.id, g]));
+
+      for (const g of next) {
+        const prev = prevById.get(g.id);
+        if (!prev) {
+          const { error } = await supabase.from("generators").insert(genToRow(g));
+          if (error) throw error;
+        } else if (JSON.stringify(prev) !== JSON.stringify(g)) {
+          const { error } = await supabase.from("generators").update(genToRow(g)).eq("id", g.id);
+          if (error) throw error;
+        }
+      }
+      for (const g of generators) {
+        if (!nextById.has(g.id)) {
+          const { error } = await supabase.from("generators").delete().eq("id", g.id);
+          if (error) throw error;
+        }
+      }
+    });
+  };
+
+  const setUsers = (next: User[]) => {
+    setUsersState(next);
+    void run(async () => {
+      const prevById = new Map(users.map((u) => [u.id, u]));
+      const nextById = new Map(next.map((u) => [u.id, u]));
+
+      for (const u of next) {
+        if (u.role !== "technician") continue;
+        const prev = prevById.get(u.id);
+        if (!prev) {
+          await createTechnician({
+            data: {
+              username: u.username,
+              password: u.password || "Tech#2026",
+              name: u.name,
+              location: u.location,
+              phone: u.phone ?? "",
+            },
+          });
+        } else if (
+          prev.name !== u.name ||
+          prev.location !== u.location ||
+          (prev.phone ?? "") !== (u.phone ?? "") ||
+          (u.password ?? "").length > 0
+        ) {
+          await updateTechnician({
+            data: {
+              id: u.id,
+              name: u.name,
+              location: u.location,
+              phone: u.phone ?? "",
+              password: u.password || undefined,
+            },
+          });
+        }
+      }
+      for (const u of users) {
+        if (u.role === "technician" && !nextById.has(u.id)) {
+          await deleteTechnician({ data: { id: u.id } });
+        }
+      }
+    });
+  };
+
+  const handleLogin = async (username: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({
+      email: emailForUsername(username),
+      password,
+    });
+    if (error) return "اسم المستخدم أو كلمة المرور غير صحيحة.";
+    await loadSession();
     return null;
   };
 
-  const handleLogout = () => {
-    setCurrentId(null);
-    store.setSession(null);
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    setCurrent(null);
+    setUsersState([]);
+    setGeneratorsState([]);
+    setReportsState([]);
   };
 
   const submitReport = (report: Report) => {
-    const others = reports.filter(
-      (r) => !(r.generatorId === report.generatorId && r.date === todayKey()),
-    );
-    const next = [...others, { ...report, createdAt: new Date().toISOString() }];
-    setReportsState(next);
-    store.setReports(next);
+    if (!current) return;
+    void run(async () => {
+      const paths = await persistPhotos(report.photos, current.id);
+      await saveReport({ ...report, techId: current.id, techName: current.name }, paths);
 
-    const status = statusFromMaintenance(report.maintenanceType);
-    setGenerators(
-      store.getGenerators().map((g) =>
-        g.id === report.generatorId
-          ? {
-              ...g,
-              status,
-              lastOilChange: report.oilChangedOn ?? g.lastOilChange,
-              lastFilterChange: report.filterChangedOn ?? g.lastFilterChange,
-              lastBatteryChange: report.batteryChangedOn ?? g.lastBatteryChange,
-            }
-          : g,
-      ),
-    );
+      const status = statusFromMaintenance(report.maintenanceType);
+      const patch: Record<string, unknown> = { status };
+      if (report.oilChangedOn) patch['last_oil_change'] = report.oilChangedOn;
+      if (report.filterChangedOn) patch['last_filter_change'] = report.filterChangedOn;
+      if (report.batteryChangedOn) patch['last_battery_change'] = report.batteryChangedOn;
+      const { error } = await supabase
+        .from("generators")
+        .update(patch)
+        .eq("id", report.generatorId);
+      if (error) throw error;
+    });
   };
 
   if (!ready) return <div className="min-h-screen bg-background" />;
-
-  const current = users.find((u) => u.id === currentId) ?? null;
   if (!current) return <Login onLogin={handleLogin} />;
 
   if (current.role === "engineer")
