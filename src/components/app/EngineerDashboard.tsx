@@ -118,8 +118,13 @@ export function EngineerDashboard({
 
   const saveTech = () => {
     if (!techDraft) return;
-    if (!techDraft.name.trim() || !techDraft.username.trim() || !techDraft.password.trim()) {
-      setTechError("الرجاء إكمال الاسم واسم المستخدم وكلمة المرور.");
+    const isNew = !users.some((u) => u.id === techDraft.id);
+    if (!techDraft.name.trim() || !techDraft.username.trim()) {
+      setTechError("الرجاء إكمال الاسم واسم المستخدم.");
+      return;
+    }
+    if (isNew && (techDraft.password ?? "").trim().length < 4) {
+      setTechError("كلمة المرور مطلوبة عند إنشاء حساب جديد (4 أحرف على الأقل).");
       return;
     }
     if (users.some((u) => u.username === techDraft.username.trim() && u.id !== techDraft.id)) {
@@ -295,9 +300,7 @@ export function EngineerDashboard({
                     <p className="text-sm font-bold">{t.name}</p>
                     <p className="mt-1 text-xs text-muted-foreground">الموقع: {t.location || "—"}</p>
                     <p className="text-xs text-muted-foreground">الهاتف: {t.phone || "—"}</p>
-                    <p className="mt-2 font-mono text-xs">
-                      {t.username} / {t.password}
-                    </p>
+                    <p className="mt-2 font-mono text-xs">اسم المستخدم: {t.username}</p>
                     <div className="mt-3 flex gap-2">
                       <button className="btn-soft" onClick={() => setTechDraft(t)}>
                         <Pencil className="size-3.5" /> تعديل
@@ -485,15 +488,22 @@ export function EngineerDashboard({
               <input
                 type="text"
                 className="field"
+                disabled={users.some((u) => u.id === techDraft.id)}
                 value={techDraft.username}
                 onChange={(e) => setTechDraft({ ...techDraft, username: e.target.value })}
               />
             </Field>
-            <Field label="كلمة المرور">
+            <Field
+              label={
+                users.some((u) => u.id === techDraft.id)
+                  ? "كلمة مرور جديدة (اتركها فارغة للإبقاء على الحالية)"
+                  : "كلمة المرور"
+              }
+            >
               <input
                 type="text"
                 className="field"
-                value={techDraft.password}
+                value={techDraft.password ?? ""}
                 onChange={(e) => setTechDraft({ ...techDraft, password: e.target.value })}
               />
             </Field>

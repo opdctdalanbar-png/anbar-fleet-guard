@@ -3,13 +3,14 @@ import { KeyRound, User as UserIcon } from "lucide-react";
 import { Banner } from "./Banner";
 
 type Props = {
-  onLogin: (username: string, password: string) => string | null;
+  onLogin: (username: string, password: string) => Promise<string | null>;
 };
 
 export function Login({ onLogin }: Props) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -22,10 +23,15 @@ export function Login({ onLogin }: Props) {
           </p>
           <form
             className="mt-6 space-y-4"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
-              const err = onLogin(username.trim(), password);
-              setError(err);
+              setPending(true);
+              setError(null);
+              try {
+                setError(await onLogin(username.trim(), password));
+              } finally {
+                setPending(false);
+              }
             }}
           >
             <div>
@@ -60,8 +66,8 @@ export function Login({ onLogin }: Props) {
                 {error}
               </p>
             ) : null}
-            <button type="submit" className="btn-primary w-full">
-              تسجيل الدخول
+            <button type="submit" className="btn-primary w-full" disabled={pending}>
+              {pending ? "جارٍ التحقق..." : "تسجيل الدخول"}
             </button>
           </form>
         </section>
