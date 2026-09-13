@@ -3,7 +3,7 @@ export type Role = "engineer" | "auditor" | "technician";
 export type User = {
   id: string;
   username: string;
-  password: string;
+  password?: string;
   name: string;
   role: Role;
   location: string;
