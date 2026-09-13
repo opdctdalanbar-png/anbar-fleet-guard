@@ -3,13 +3,14 @@ import { KeyRound, User as UserIcon } from "lucide-react";
 import { Banner } from "./Banner";
 
 type Props = {
-  onLogin: (username: string, password: string) => string | null;
+  onLogin: (username: string, password: string) => Promise<string | null>;
 };
 
 export function Login({ onLogin }: Props) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">

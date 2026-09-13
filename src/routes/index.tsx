@@ -218,10 +218,15 @@ function Index() {
       await saveReport({ ...report, techId: current.id, techName: current.name }, paths);
 
       const status = statusFromMaintenance(report.maintenanceType);
-      const patch: Record<string, unknown> = { status };
-      if (report.oilChangedOn) patch['last_oil_change'] = report.oilChangedOn;
-      if (report.filterChangedOn) patch['last_filter_change'] = report.filterChangedOn;
-      if (report.batteryChangedOn) patch['last_battery_change'] = report.batteryChangedOn;
+      const patch: {
+        status: string;
+        last_oil_change?: string;
+        last_filter_change?: string;
+        last_battery_change?: string;
+      } = { status };
+      if (report.oilChangedOn) patch.last_oil_change = report.oilChangedOn;
+      if (report.filterChangedOn) patch.last_filter_change = report.filterChangedOn;
+      if (report.batteryChangedOn) patch.last_battery_change = report.batteryChangedOn;
       const { error } = await supabase
         .from("generators")
         .update(patch)
